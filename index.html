@@ -322,7 +322,7 @@
         // ==========================================
         // 0. GAS API 網址 (請替換為您部署的 Web App URL)
         // ==========================================
-        const GAS_API_URL = "請將這裡替換成您的_GAS_網頁應用程式網址";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec";
 
         // ==========================================
         // 1. 圖片與題庫資料設定
@@ -539,7 +539,7 @@
 
         // 讀取排行榜資料
         function loadLeaderboard() {
-            if (GAS_API_URL === "請將這裡替換成您的_GAS_網頁應用程式網址") {
+            if (GAS_API_URL === "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec") {
                 const tbody = document.getElementById('leaderboard-body');
                 tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">請設定 GAS_API_URL 以啟用雲端試算表排行榜</td></tr>`;
                 return;
