@@ -123,7 +123,7 @@
                 <!-- 題目圖 -->
                 <div class="flex-1">
                     <div class="relative rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner group">
-                        <img id="img-original" src="" alt="題目圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
+                        <img id="img-original" src="" alt="題目圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105" onerror="this.onerror=null; this.src='https://placehold.co/800x600/FFD166/555555?text=圖片載入失敗\n請確認共用設定';">
                         <div class="absolute top-3 left-3 bg-blue-500 text-white px-4 py-1.5 rounded-full font-bold shadow-md flex items-center gap-1">
                             <i class="ph-bold ph-image-square"></i> 題目圖 (老師)
                         </div>
@@ -133,7 +133,7 @@
                 <!-- 學生生成圖 -->
                 <div class="flex-1">
                     <div class="relative rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner group">
-                        <img id="img-student" src="" alt="隨機學生圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
+                        <img id="img-student" src="" alt="隨機學生圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105" onerror="this.onerror=null; this.src='https://placehold.co/800x600/4ECDC4/ffffff?text=圖片載入失敗\n請確認共用設定';">
                         <div class="absolute top-3 left-3 bg-pink-500 text-white px-4 py-1.5 rounded-full font-bold shadow-md flex items-center gap-1">
                             <i class="ph-bold ph-magic-wand"></i> 生成圖 (學生)
                         </div>
@@ -322,13 +322,13 @@
         // ==========================================
         // 0. GAS API 網址 (請替換為您部署的 Web App URL)
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec";
+        const GAS_API_URL = "請將這裡替換成您的_GAS_網頁應用程式網址";
 
         // ==========================================
         // 1. 圖片與題庫資料設定
         // ==========================================
-        // 老師的題目圖 (轉為可直接顯示的連結)
-        const IMAGE_ORIGINAL_URL = "https://drive.google.com/uc?export=view&id=1_6vBMDL3j5ry4XK3ZFGtFh_i2QSJLyVK"; 
+        // 老師的題目圖 (改用 lh3.googleusercontent.com 避免 Google Drive 阻擋顯示)
+        const IMAGE_ORIGINAL_URL = "https://lh3.googleusercontent.com/d/1_6vBMDL3j5ry4XK3ZFGtFh_i2QSJLyVK"; 
         
         // 隨機抽取的學生圖庫與其原始作答(差異處)
         const STUDENT_POOL = [
@@ -388,7 +388,7 @@
             // 隨機抽題
             currentStudent = STUDENT_POOL[Math.floor(Math.random() * STUDENT_POOL.length)];
             document.getElementById('img-original').src = IMAGE_ORIGINAL_URL;
-            document.getElementById('img-student').src = `https://drive.google.com/uc?export=view&id=${currentStudent.id}`;
+            document.getElementById('img-student').src = `https://lh3.googleusercontent.com/d/${currentStudent.id}`;
             
             // 渲染選項
             renderOptions('task1-container', task1Options, 'task1', 'green');
@@ -508,7 +508,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             // 存入 GAS 排行榜
-            if (GAS_API_URL !== "請將這裡替換成您的_GAS_網頁應用程式網址") {
+            if (GAS_API_URL !== "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec") {
                 try {
                     const tbody = document.getElementById('leaderboard-body');
                     tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">成績傳送至試算表中...</td></tr>`;
