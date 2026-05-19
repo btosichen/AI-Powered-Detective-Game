@@ -508,7 +508,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             // 存入 GAS 排行榜
-            if (GAS_API_URL !== "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec") {
+            if (GAS_API_URL !== "請將這裡替換成您的_GAS_網頁應用程式網址") {
                 try {
                     const tbody = document.getElementById('leaderboard-body');
                     tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">成績傳送至試算表中...</td></tr>`;
@@ -517,6 +517,7 @@
                         method: 'POST',
                         // 使用 text/plain 避免跨域請求 (CORS) preflight 錯誤
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        redirect: 'follow', // 允許跟隨 Google 伺服器的重新導向
                         body: JSON.stringify({
                             name: playerName,
                             score: score,
@@ -539,7 +540,7 @@
 
         // 讀取排行榜資料
         function loadLeaderboard() {
-            if (GAS_API_URL === "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec") {
+            if (GAS_API_URL === "請將這裡替換成您的_GAS_網頁應用程式網址") {
                 const tbody = document.getElementById('leaderboard-body');
                 tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">請設定 GAS_API_URL 以啟用雲端試算表排行榜</td></tr>`;
                 return;
