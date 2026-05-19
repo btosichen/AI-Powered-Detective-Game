@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 找碴偵探：哪裡像？哪裡怪？</title>
-    <!-- 引入 Tailwind CSS (版面與樣式) -->
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Phosphor Icons (可愛的圖示) -->
+    <!-- 引入 Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- 引入 Google Fonts (活潑圓潤的字體) -->
+    <!-- 引入 Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -54,7 +54,6 @@
             transform: translateY(1px);
         }
 
-        /* 勾選動畫 */
         @keyframes pop {
             0% { transform: scale(0.95); }
             50% { transform: scale(1.05); }
@@ -63,34 +62,55 @@
         .selected-anim {
             animation: pop 0.3s ease-out forwards;
         }
-        
-        /* 隱藏卷軸但可滑動 */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+
+        /* 登入遮罩 */
+        #login-overlay {
+            backdrop-filter: blur(8px);
         }
     </style>
 </head>
 <body class="text-gray-800 antialiased min-h-screen pb-20">
 
-    <!-- 頂部標題區 -->
-    <header class="text-center pt-10 pb-6 px-4">
-        <div class="inline-block bg-white px-6 py-3 rounded-full shadow-md mb-4 border-2 border-primary/20">
+    <!-- 登入與輸入名稱畫面 -->
+    <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white/60">
+        <div class="bg-white p-8 md:p-12 rounded-3xl card-shadow max-w-md w-full mx-4 text-center border-4 border-primary/20">
+            <i class="ph-fill ph-detective text-7xl text-primary mb-4 inline-block"></i>
+            <h2 class="text-3xl font-black text-gray-800 mb-2">AI 找碴偵探</h2>
+            <p class="text-gray-500 mb-8">請輸入你的偵探代號，準備開始挑戰！</p>
+            
+            <input type="text" id="player-name" placeholder="輸入暱稱 (例如: 柯南)" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl mb-6 focus:ring-4 focus:ring-primary/30 focus:border-primary transition text-center font-bold">
+            
+            <button id="start-btn" class="w-full bg-primary hover:bg-red-500 text-white font-black text-2xl py-4 rounded-xl shadow-lg transition duration-200">
+                開始偵查 🔍
+            </button>
+        </div>
+    </div>
+
+    <!-- 頂部標題區 & 計時器 -->
+    <header class="text-center pt-8 pb-4 px-4 relative">
+        <div class="inline-block bg-white px-6 py-3 rounded-full shadow-md mb-2 border-2 border-primary/20">
             <h1 class="text-3xl md:text-5xl font-black text-primary tracking-wide flex items-center justify-center gap-3">
                 <i class="ph-fill ph-magnifying-glass"></i>
                 AI 找碴偵探
             </h1>
         </div>
-        <p class="text-lg md:text-xl font-bold text-gray-600 bg-white/80 inline-block px-4 py-1 rounded-full">
+        <p class="text-lg md:text-xl font-bold text-gray-600 bg-white/80 inline-block px-4 py-1 rounded-full mb-4">
             🔍 觀察圖片差異，破解 AI 提示詞的秘密！
         </p>
+        
+        <!-- 計時器與玩家資訊 -->
+        <div class="flex justify-center items-center gap-4 text-lg font-bold">
+            <div class="bg-gray-800 text-white px-4 py-1 rounded-full flex items-center gap-2 shadow">
+                <i class="ph-fill ph-user"></i> <span id="display-player-name">偵探</span>
+            </div>
+            <div class="bg-blue-600 text-white px-4 py-1 rounded-full flex items-center gap-2 shadow w-32 justify-center">
+                <i class="ph-fill ph-timer"></i> <span id="timer-display">00:00</span>
+            </div>
+        </div>
     </header>
 
     <!-- 主要內容區 -->
-    <main class="max-w-6xl mx-auto px-4" id="main-content">
+    <main class="max-w-6xl mx-auto px-4 hidden" id="main-content">
         
         <!-- 圖片比較區 -->
         <section class="bg-white rounded-3xl p-4 md:p-8 card-shadow mb-8 border-t-8 border-secondary">
@@ -105,7 +125,7 @@
                     <div class="relative rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner group">
                         <img id="img-original" src="" alt="題目圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
                         <div class="absolute top-3 left-3 bg-blue-500 text-white px-4 py-1.5 rounded-full font-bold shadow-md flex items-center gap-1">
-                            <i class="ph-bold ph-image-square"></i> 題目圖
+                            <i class="ph-bold ph-image-square"></i> 題目圖 (老師)
                         </div>
                     </div>
                 </div>
@@ -113,9 +133,12 @@
                 <!-- 學生生成圖 -->
                 <div class="flex-1">
                     <div class="relative rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner group">
-                        <img id="img-student" src="" alt="學生生成圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
+                        <img id="img-student" src="" alt="隨機學生圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
                         <div class="absolute top-3 left-3 bg-pink-500 text-white px-4 py-1.5 rounded-full font-bold shadow-md flex items-center gap-1">
-                            <i class="ph-bold ph-magic-wand"></i> 學生生成圖
+                            <i class="ph-bold ph-magic-wand"></i> 生成圖 (學生)
+                        </div>
+                        <div class="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1 rounded-lg text-xs backdrop-blur-sm">
+                            隨機題目
                         </div>
                     </div>
                 </div>
@@ -129,10 +152,7 @@
                 <h2 class="text-2xl font-bold text-gray-800">任務一：找出最相似的地方</h2>
             </div>
             <p class="text-gray-500 mb-5 ml-10">請點選你覺得兩張圖中最相像的元素（可複選）</p>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" id="task1-container">
-                <!-- JS 動態生成選項 -->
-            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" id="task1-container"></div>
         </section>
 
         <!-- 任務二：差異最大的地方 -->
@@ -141,11 +161,8 @@
                 <div class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl">2</div>
                 <h2 class="text-2xl font-bold text-gray-800">任務二：找出差異最大的地方</h2>
             </div>
-            <p class="text-gray-500 mb-5 ml-10">請點選你覺得差異最明顯的地方（可複選）</p>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="task2-container">
-                <!-- JS 動態生成選項 -->
-            </div>
+            <p class="text-gray-500 mb-5 ml-10">請點選你覺得差異最明顯的地方，將與原作者(學生)的答案比對計分！（可複選）</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="task2-container"></div>
         </section>
 
         <!-- 任務三：推理原因 -->
@@ -154,11 +171,8 @@
                 <div class="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl">3</div>
                 <h2 class="text-2xl font-bold text-gray-800">任務三：推理差異原因</h2>
             </div>
-            <p class="text-gray-500 mb-5 ml-10">化身偵探，推測為什麼 AI 會畫出不一樣的結果？（可複選）</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="task3-container">
-                <!-- JS 動態生成選項 -->
-            </div>
+            <p class="text-gray-500 mb-5 ml-10">推測為什麼 AI 會畫出不一樣的結果？（可複選）</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="task3-container"></div>
         </section>
 
         <!-- 任務四：改寫提示詞 -->
@@ -197,33 +211,47 @@
 
         <!-- 送出按鈕 -->
         <div class="text-center">
-            <button onclick="submitGame()" class="bg-primary hover:bg-red-500 text-white font-black text-2xl py-4 px-12 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200 flex items-center justify-center gap-2 mx-auto">
+            <button id="submit-btn" class="bg-primary hover:bg-red-500 text-white font-black text-2xl py-4 px-12 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200 flex items-center justify-center gap-2 mx-auto">
                 <i class="ph-bold ph-check-circle"></i>
                 送出偵查報告
             </button>
         </div>
     </main>
 
-    <!-- 結果回饋區 (預設隱藏) -->
-    <main class="max-w-4xl mx-auto px-4 hidden" id="result-content">
-        <div class="bg-white rounded-3xl p-8 card-shadow text-center relative overflow-hidden">
-            <!-- 裝飾背景 -->
-            <div class="absolute top-[-50px] right-[-50px] text-yellow-300 opacity-20">
+    <!-- 結果與排行榜區 (預設隱藏) -->
+    <main class="max-w-5xl mx-auto px-4 hidden" id="result-content">
+        <div class="bg-white rounded-3xl p-6 md:p-8 card-shadow text-center relative overflow-hidden mb-8">
+            <div class="absolute top-[-50px] right-[-50px] text-yellow-300 opacity-20 pointer-events-none">
                 <i class="ph-fill ph-star" style="font-size: 200px;"></i>
             </div>
             
             <h2 class="text-4xl font-black text-gray-800 mb-2 mt-4 relative z-10">偵查完成！</h2>
             <p class="text-xl text-gray-500 mb-8 relative z-10">來看看你的分析報告吧</p>
 
-            <!-- 總分與稱號 -->
-            <div class="flex flex-col items-center justify-center mb-10 relative z-10">
-                <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-accent to-yellow-300 flex items-center justify-center shadow-lg border-4 border-white mb-4">
-                    <span id="final-score" class="text-5xl font-black text-orange-600">0</span>
-                    <span class="text-xl font-bold text-orange-600 mt-3">分</span>
+            <!-- 總分、時間與稱號 -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 mb-10 relative z-10">
+                <div class="flex flex-col items-center">
+                    <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-accent to-yellow-300 flex flex-col items-center justify-center shadow-lg border-4 border-white mb-2">
+                        <span id="final-score" class="text-5xl font-black text-orange-600 leading-none mt-2">0</span>
+                        <span class="text-sm font-bold text-orange-700">總分</span>
+                    </div>
                 </div>
-                <div id="rank-badge" class="bg-gray-800 text-white px-6 py-2 rounded-full text-2xl font-black shadow-md flex items-center gap-2">
-                    <!-- JS 填入稱號 -->
+                
+                <div class="flex flex-col items-center md:items-start gap-3">
+                    <div id="rank-badge" class="bg-gray-800 text-white px-6 py-2 rounded-full text-2xl font-black shadow-md flex items-center gap-2"></div>
+                    <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                        <i class="ph-bold ph-clock"></i> 耗時：<span id="final-time">00:00</span>
+                    </div>
                 </div>
+            </div>
+
+            <!-- 原作者(學生)的解答比對 -->
+            <div class="bg-yellow-50 p-6 rounded-2xl border-2 border-yellow-200 mb-8 text-left relative z-10">
+                <h3 class="font-bold text-yellow-800 text-xl flex items-center gap-2 mb-3">
+                    <i class="ph-fill ph-student"></i> 產生這張圖的學生是這樣說的...
+                </h3>
+                <p id="student-original-answer" class="text-lg text-gray-700 bg-white p-4 rounded-xl shadow-sm italic leading-relaxed border-l-4 border-yellow-400"></p>
+                <p class="text-sm text-yellow-600 mt-2"><i class="ph-bold ph-info"></i> 系統已根據原作者的思路為你的「差異處」進行比對加分！</p>
             </div>
 
             <!-- 報告明細 -->
@@ -258,51 +286,139 @@
             </div>
 
             <!-- 鼓勵文字 -->
-            <div id="feedback-text" class="text-xl font-bold text-gray-700 bg-gray-100 p-6 rounded-2xl mb-8 relative z-10">
-                <!-- JS 填入鼓勵 -->
-            </div>
+            <div id="feedback-text" class="text-xl font-bold text-gray-700 bg-gray-100 p-6 rounded-2xl mb-8 relative z-10"></div>
 
-            <button onclick="resetGame()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition duration-200 inline-flex items-center gap-2 relative z-10">
+            <button id="reset-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition duration-200 inline-flex items-center gap-2 relative z-10">
                 <i class="ph-bold ph-arrow-counter-clockwise"></i>
-                重新挑戰
+                再玩一次 (換張圖)
             </button>
+        </div>
+
+        <!-- 雲端排行榜 -->
+        <div class="bg-white rounded-3xl p-6 md:p-8 card-shadow mb-10 border-t-8 border-indigo-500">
+            <h2 class="text-3xl font-black text-gray-800 mb-6 flex items-center justify-center gap-3">
+                <i class="ph-fill ph-trophy text-yellow-500"></i> 神探排行榜
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-indigo-50 text-indigo-800 rounded-t-xl">
+                            <th class="p-4 font-black rounded-tl-xl">排名</th>
+                            <th class="p-4 font-black">偵探代號</th>
+                            <th class="p-4 font-black">分數</th>
+                            <th class="p-4 font-black rounded-tr-xl">耗時</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body" class="divide-y divide-gray-100">
+                        <tr><td colspan="4" class="p-8 text-center text-gray-400">排行榜載入中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
-    <!-- JavaScript 邏輯 -->
+    <!-- 遊戲邏輯與 Google Apps Script (GAS) -->
     <script>
         // ==========================================
-        // 1. 圖片網址變數集中管理 (請在這裡替換您的圖片網址)
+        // 0. GAS API 網址 (請替換為您部署的 Web App URL)
         // ==========================================
-        const IMAGE_ORIGINAL_URL = "https://placehold.co/800x600/FFD166/555555?text=Original+Image+(Teacher)"; 
-        const IMAGE_STUDENT_URL = "https://placehold.co/800x600/4ECDC4/ffffff?text=AI+Generated+(Student)";
-
-        // 設定圖片
-        document.getElementById('img-original').src = IMAGE_ORIGINAL_URL;
-        document.getElementById('img-student').src = IMAGE_STUDENT_URL;
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwf0WrHeMyfTQQ4-9ezBhnKs8rSef9ROg5CwxpTXJAOXqsOu3Zz3ey_hok88FNs2pg9NQ/exec";
 
         // ==========================================
-        // 2. 任務選項資料設定
+        // 1. 圖片與題庫資料設定
         // ==========================================
+        // 老師的題目圖 (轉為可直接顯示的連結)
+        const IMAGE_ORIGINAL_URL = "https://drive.google.com/uc?export=view&id=1_6vBMDL3j5ry4XK3ZFGtFh_i2QSJLyVK"; 
+        
+        // 隨機抽取的學生圖庫與其原始作答(差異處)
+        const STUDENT_POOL = [
+            { id: "1h6uPnzzeaCleivIq9QSgDWVJACVNvNNs", diff: "最像的是那隻小狗和旁邊在聊天的人群 差異最大的是女孩 因為帽子不同和衣服顏色也不一樣" },
+            { id: "1JYFokeq0nPFs8HLRSFyqjcIp1k9ZW3RY", diff: "街景大致上相同，但是小女孩和後面的路人走路的朝向不一樣，應該要在描述時講述人走路的方向。" },
+            { id: "1dPj3WkZvHEw5V2SHRPf_Jw8XSpsjAiWv", diff: "旁邊的人太多 房子風格不同 因為描述不夠清楚" },
+            { id: "1JWWJUAuI6PHVI7ZfOKbPNtiiQ1VUnr5v", diff: "小女孩的衣服不像 街道上沒人 手上不是禮物盒" },
+            { id: "16yfc1zKZAD26uqGsVA_lSBEpwlExv2yc", diff: "紅帽白衣的小女孩.忽略了陽光,小狗,大樹,不同的城市,馬路旁." },
+            { id: "1B8gi-X1d3In-ZfVttOjEkC1i0tweqgV6", diff: "沒有黃昏，視角方向不對，狗狗品種不對" },
+            { id: "1_Zy3TESAJA4suxJ1C_pg61BYoFsfwz57", diff: "小狗的品種、牽牽繩的手、咖啡廳和女孩的距離都不一樣" },
+            { id: "1xiab7_easwCAMY_1vbsfPeLmT8bKQvfw", diff: "最像的地方是小女孩不像的地方是街道跟少了一個人" },
+            { id: "1ek8bn-eDKEwxDVDQ1ewG7H8IInHJC3-_", diff: "我覺得小女孩最像，陽光最不" },
+            { id: "1-XT2gSgZ3Hibdlu9OcXlEbpa3BrgBAaI", diff: "狗最像,街道風格最不像,原圖的房子比較偏向義式風格,我的圖比較美式,陽光不夠燦爛" }
+        ];
+
         const task1Options = ["小女孩", "紅色帽子", "白色洋裝", "白色小狗", "紅色牽繩", "禮物盒", "咖啡廳", "夕陽光線", "街道場景", "背景路人"];
         const task2Options = ["女孩服裝不一樣", "女孩表情或動作不同", "狗的外型不同", "咖啡廳細節變少", "街道角度不同", "光線不像原圖", "建築物風格不同", "畫風變成卡通或插畫", "背景人物位置不同", "整體構圖比例不同"];
         const task3Options = ["提示詞不夠具體", "沒有清楚描述畫風", "沒有清楚描述光線與夕陽", "忽略咖啡廳與街道細節", "沒有描述人物位置與角度", "沒有描述小狗特徵", "沒有說明背景人物", "AI 自行補充了畫面細節"];
 
-        // 儲存玩家選擇的狀態
-        let selections = {
-            task1: new Set(),
-            task2: new Set(),
-            task3: new Set()
-        };
+        // ==========================================
+        // 2. 全域狀態
+        // ==========================================
+        let selections = { task1: new Set(), task2: new Set(), task3: new Set() };
+        let playerName = "";
+        let startTime = 0;
+        let timeElapsed = 0; // 秒
+        let timerInterval = null;
+        let currentStudent = null;
+
+        // 啟動時先載入排行榜
+        loadLeaderboard();
 
         // ==========================================
-        // 3. UI 渲染函式
+        // 3. 遊戲流程與計時控制
         // ==========================================
-        
-        // 渲染按鈕
+        document.getElementById('start-btn').addEventListener('click', () => {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if(!nameInput) {
+                alert("請輸入偵探代號！");
+                return;
+            }
+            playerName = nameInput;
+            document.getElementById('display-player-name').innerText = playerName;
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            
+            startNewGame();
+        });
+
+        function startNewGame() {
+            // 清空選擇
+            selections.task1.clear();
+            selections.task2.clear();
+            selections.task3.clear();
+            document.getElementById('prompt-input').value = '';
+            
+            // 隨機抽題
+            currentStudent = STUDENT_POOL[Math.floor(Math.random() * STUDENT_POOL.length)];
+            document.getElementById('img-original').src = IMAGE_ORIGINAL_URL;
+            document.getElementById('img-student').src = `https://drive.google.com/uc?export=view&id=${currentStudent.id}`;
+            
+            // 渲染選項
+            renderOptions('task1-container', task1Options, 'task1', 'green');
+            renderOptions('task2-container', task2Options, 'task2', 'orange');
+            renderOptions('task3-container', task3Options, 'task3', 'purple');
+            
+            // 開始計時
+            timeElapsed = 0;
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
+            const s = (timeElapsed % 60).toString().padStart(2, '0');
+            const displayStr = `${m}:${s}`;
+            document.getElementById('timer-display').innerText = displayStr;
+            document.getElementById('final-time').innerText = displayStr;
+        }
+
+        // ==========================================
+        // 4. UI 渲染函式
+        // ==========================================
         function renderOptions(containerId, options, taskKey, colorTheme) {
             const container = document.getElementById(containerId);
-            container.innerHTML = ''; // 清空
+            container.innerHTML = ''; 
 
             const themeClasses = {
                 green: { base: 'border-green-200 text-green-700 hover:bg-green-50', active: 'bg-green-100 border-green-500 shadow-md font-bold' },
@@ -310,90 +426,73 @@
                 purple: { base: 'border-purple-200 text-purple-700 hover:bg-purple-50', active: 'bg-purple-100 border-purple-500 shadow-md font-bold' }
             };
 
-            options.forEach((opt, index) => {
+            options.forEach((opt) => {
                 const isSelected = selections[taskKey].has(opt);
                 const btn = document.createElement('button');
                 
-                // 基礎樣式
                 let classes = `btn-option w-full text-left md:text-center px-4 py-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-between md:justify-center gap-2 bg-white `;
-                
-                if (isSelected) {
-                    classes += themeClasses[colorTheme].active + ' selected-anim';
-                } else {
-                    classes += themeClasses[colorTheme].base;
-                }
-
+                classes += isSelected ? themeClasses[colorTheme].active + ' selected-anim' : themeClasses[colorTheme].base;
                 btn.className = classes;
-                btn.onclick = () => toggleOption(taskKey, opt, containerId, options, colorTheme);
+                
+                btn.onclick = () => {
+                    if (selections[taskKey].has(opt)) selections[taskKey].delete(opt);
+                    else selections[taskKey].add(opt);
+                    renderOptions(containerId, options, taskKey, colorTheme);
+                };
 
-                // 內容與 Check icon
                 const iconHtml = isSelected ? `<i class="ph-fill ph-check-circle text-xl"></i>` : `<i class="ph ph-circle text-xl opacity-50"></i>`;
-                
-                btn.innerHTML = `
-                    <span>${opt}</span>
-                    ${iconHtml}
-                `;
-                
+                btn.innerHTML = `<span>${opt}</span>${iconHtml}`;
                 container.appendChild(btn);
             });
         }
 
-        // 切換選項狀態
-        function toggleOption(taskKey, optionText, containerId, options, colorTheme) {
-            if (selections[taskKey].has(optionText)) {
-                selections[taskKey].delete(optionText);
-            } else {
-                selections[taskKey].add(optionText);
-            }
-            // 重新渲染該區塊
-            renderOptions(containerId, options, taskKey, colorTheme);
-        }
-
-        // 初始渲染
-        function initApp() {
-            renderOptions('task1-container', task1Options, 'task1', 'green');
-            renderOptions('task2-container', task2Options, 'task2', 'orange');
-            renderOptions('task3-container', task3Options, 'task3', 'purple');
-        }
-
         // ==========================================
-        // 4. 計分與結果邏輯
+        // 5. 提交計分與 GAS 排行榜儲存邏輯
         // ==========================================
-        function submitGame() {
-            // 取得輸入的提示詞
-            const promptText = document.getElementById('prompt-input').value.trim();
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            clearInterval(timerInterval); // 停止計時
             
-            // 計算分數 (簡單的點擊計分邏輯，可依需求調整)
+            const promptText = document.getElementById('prompt-input').value.trim();
             let score = 0;
-            // 每個選項算 3 分
+            
+            // 基礎計分
             score += selections.task1.size * 3; 
             score += selections.task2.size * 3;
             score += selections.task3.size * 3;
             
-            // 提示詞有寫加分
+            // 提示詞加分
             if (promptText.length > 5) score += 10;
             if (promptText.length > 20) score += 10;
-            if (promptText.length > 40) score += 5; // 寫很長再加分
+            if (promptText.length > 40) score += 5;
 
-            // 最多 100 分
+            // 智慧比對：若玩家圈選的任務二與學生的原始答案有相關，額外加分
+            const studentRefText = currentStudent.diff || "";
+            selections.task2.forEach(opt => {
+                // 簡單的關鍵字比對加分
+                if((opt.includes('狗') && studentRefText.includes('狗')) || 
+                   (opt.includes('服裝') && (studentRefText.includes('衣服') || studentRefText.includes('穿'))) ||
+                   (opt.includes('角度') && studentRefText.includes('角度')) ||
+                   (opt.includes('光線') && (studentRefText.includes('光') || studentRefText.includes('陽光') || studentRefText.includes('黃昏'))) ||
+                   (opt.includes('人物') && (studentRefText.includes('人') || studentRefText.includes('女生')))) {
+                    score += 5; 
+                }
+            });
+
+            // 滿分限制與保底分
             if (score > 100) score = 100;
-            // 如果甚麼都沒點但送出，給個基礎分 10
             if (score === 0) score = 10;
 
-            // 判斷等級與評語
-            let rankInfo = getRankInfo(score);
-
-            // 填入結果資料
+            // 處理結算畫面資料
+            const rankInfo = getRankInfo(score);
             document.getElementById('final-score').innerText = score;
             document.getElementById('rank-badge').innerHTML = rankInfo.badgeHtml;
             document.getElementById('feedback-text').innerText = rankInfo.feedback;
+            document.getElementById('student-original-answer').innerText = `「${studentRefText}」`;
 
-            // 填入選擇清單
             fillResultList('res-task1', selections.task1, '你還沒找出相似的地方唷！');
             fillResultList('res-task2', selections.task2, '你還沒發現差異在哪裡唷！');
             fillResultList('res-task3', selections.task3, '沒有選擇推理原因。');
             
-            // 填入提示詞
             const resPromptEl = document.getElementById('res-prompt');
             if(promptText) {
                 resPromptEl.innerText = `「${promptText}」`;
@@ -403,69 +502,112 @@
                 resPromptEl.classList.add('text-gray-400');
             }
 
-            // 切換畫面 (隱藏主內容，顯示結果)
+            // 切換畫面
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('result-content').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
 
-        // 判斷等級函式
-        function getRankInfo(score) {
-            if (score >= 90) {
-                return {
-                    badgeHtml: `<i class="ph-fill ph-crown text-yellow-300"></i> AI 摹寫神偵探`,
-                    feedback: "太厲害了！你擁有鷹眼般的觀察力，不僅抓出所有細節差異，還能精準推理出 AI 漏掉的提示詞！繼續保持這份敏銳度！"
-                };
-            } else if (score >= 70) {
-                return {
-                    badgeHtml: `<i class="ph-fill ph-magnifying-glass text-blue-300"></i> 細節觀察高手`,
-                    feedback: "做得好！你找出了大部分的差異與相似處，對 AI 的生成邏輯有很好的理解。下次在提示詞中多加一點點場景細節，圖就會更像喔！"
-                };
-            } else if (score >= 50) {
-                return {
-                    badgeHtml: `<i class="ph-fill ph-pencil text-green-300"></i> 提示詞修煉中`,
-                    feedback: "不錯的嘗試！你觀察到了一些重點。要讓 AI 完全聽懂你的話，需要把「光線、畫風、主角動作」等細節描述得更清楚喔，繼續加油！"
-                };
-            } else {
-                return {
-                    badgeHtml: `<i class="ph-fill ph-baby text-pink-300"></i> AI 找碴新手村`,
-                    feedback: "剛開始練習難免會漏看一些細節。下次試著從「人、事、時、地、物」五個方向，把圖片拆解開來仔細觀察看看！"
-                };
+            // 存入 GAS 排行榜
+            if (GAS_API_URL !== "請將這裡替換成您的_GAS_網頁應用程式網址") {
+                try {
+                    const tbody = document.getElementById('leaderboard-body');
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">成績傳送至試算表中...</td></tr>`;
+
+                    fetch(GAS_API_URL, {
+                        method: 'POST',
+                        // 使用 text/plain 避免跨域請求 (CORS) preflight 錯誤
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            name: playerName,
+                            score: score,
+                            time: timeElapsed
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        loadLeaderboard(); // 上傳成功後重新載入排行榜
+                    })
+                    .catch(err => {
+                        console.error("寫入失敗", err);
+                        loadLeaderboard();
+                    });
+                } catch (e) {
+                    console.error("無法儲存成績", e);
+                }
             }
+        });
+
+        // 讀取排行榜資料
+        function loadLeaderboard() {
+            if (GAS_API_URL === "請將這裡替換成您的_GAS_網頁應用程式網址") {
+                const tbody = document.getElementById('leaderboard-body');
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">請設定 GAS_API_URL 以啟用雲端試算表排行榜</td></tr>`;
+                return;
+            }
+
+            fetch(GAS_API_URL)
+                .then(res => res.json())
+                .then(records => {
+                    const tbody = document.getElementById('leaderboard-body');
+                    tbody.innerHTML = '';
+                    
+                    if(!records || records.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">目前還沒有偵探留下紀錄，搶頭香吧！</td></tr>`;
+                        return;
+                    }
+
+                    records.forEach((record, index) => {
+                        const m = Math.floor(record.time / 60).toString().padStart(2, '0');
+                        const s = (record.time % 60).toString().padStart(2, '0');
+                        
+                        let rankHtml = `<span class="font-bold text-gray-600">${index + 1}</span>`;
+                        if(index === 0) rankHtml = `<i class="ph-fill ph-medal text-2xl text-yellow-500"></i>`;
+                        if(index === 1) rankHtml = `<i class="ph-fill ph-medal text-2xl text-gray-400"></i>`;
+                        if(index === 2) rankHtml = `<i class="ph-fill ph-medal text-2xl text-amber-700"></i>`;
+
+                        // 標記自己
+                        const rowClass = record.name === playerName ? 'bg-yellow-50 font-bold' : '';
+
+                        tbody.innerHTML += `
+                            <tr class="${rowClass} hover:bg-gray-50 transition">
+                                <td class="p-4">${rankHtml}</td>
+                                <td class="p-4 text-gray-800">${record.name}</td>
+                                <td class="p-4 text-orange-600 font-black">${record.score}</td>
+                                <td class="p-4 text-gray-500">${m}:${s}</td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error("載入排行榜失敗", error);
+                    const tbody = document.getElementById('leaderboard-body');
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">載入失敗，請檢查網址設定</td></tr>`;
+                });
         }
 
-        // 填充結果列表工具函式
+        // ==========================================
+        // 工具函式
+        // ==========================================
+        function getRankInfo(score) {
+            if (score >= 90) return { badgeHtml: `<i class="ph-fill ph-crown text-yellow-300"></i> AI 摹寫神偵探`, feedback: "太厲害了！你擁有鷹眼般的觀察力，不僅抓出所有細節差異，還能精準推理出 AI 漏掉的提示詞！" };
+            if (score >= 70) return { badgeHtml: `<i class="ph-fill ph-magnifying-glass text-blue-300"></i> 細節觀察高手`, feedback: "做得好！你找出了大部分的差異與相似處。下次在提示詞中多加一點點場景細節，圖就會更像喔！" };
+            if (score >= 50) return { badgeHtml: `<i class="ph-fill ph-pencil text-green-300"></i> 提示詞修煉中`, feedback: "不錯的嘗試！要讓 AI 完全聽懂你的話，需要把光線、畫風、主角動作等細節描述得更清楚喔！" };
+            return { badgeHtml: `<i class="ph-fill ph-baby text-pink-300"></i> AI 找碴新手村`, feedback: "剛開始練習難免會漏看細節。下次試著從「人、事、時、地、物」五個方向仔細觀察看看！" };
+        }
+
         function fillResultList(elementId, setObj, emptyMessage) {
             const el = document.getElementById(elementId);
             el.innerHTML = '';
-            if (setObj.size === 0) {
-                el.innerHTML = `<li class="text-gray-400 italic">${emptyMessage}</li>`;
-            } else {
-                setObj.forEach(item => {
-                    el.innerHTML += `<li>${item}</li>`;
-                });
-            }
+            if (setObj.size === 0) el.innerHTML = `<li class="text-gray-400 italic">${emptyMessage}</li>`;
+            else setObj.forEach(item => el.innerHTML += `<li>${item}</li>`);
         }
 
-        // 重新開始遊戲
-        function resetGame() {
-            // 清空狀態
-            selections.task1.clear();
-            selections.task2.clear();
-            selections.task3.clear();
-            document.getElementById('prompt-input').value = '';
-
-            // 重新渲染按鈕
-            initApp();
-
-            // 切換畫面
+        document.getElementById('reset-btn').addEventListener('click', () => {
             document.getElementById('result-content').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
+            startNewGame();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // 執行初始啟動
-        window.onload = initApp;
+        });
 
     </script>
 </body>
