@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 找碴偵探：哪裡像？哪裡怪？</title>
+    <!-- 引入 Tailwind CSS (版面與樣式) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Phosphor Icons (可愛的圖示) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- 引入 Google Fonts (活潑圓潤的字體) -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'Noto Sans TC', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#FF6B6B',
+                        secondary: '#4ECDC4',
+                        accent: '#FFE66D',
+                        bglight: '#F7FFF7'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f0f8ff;
+            background-image: radial-gradient(#FFD166 1px, transparent 1px), radial-gradient(#FFD166 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-option {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        .btn-option:active {
+            transform: translateY(1px);
+        }
+
+        /* 勾選動畫 */
+        @keyframes pop {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .selected-anim {
+            animation: pop 0.3s ease-out forwards;
+        }
+        
+        /* 隱藏卷軸但可滑動 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen pb-20">
+
+    <!-- 頂部標題區 -->
+    <header class="text-center pt-10 pb-6 px-4">
+        <div class="inline-block bg-white px-6 py-3 rounded-full shadow-md mb-4 border-2 border-primary/20">
+            <h1 class="text-3xl md:text-5xl font-black text-primary tracking-wide flex items-center justify-center gap-3">
+                <i class="ph-fill ph-magnifying-glass"></i>
+                AI 找碴偵探
+            </h1>
+        </div>
+        <p class="text-lg md:text-xl font-bold text-gray-600 bg-white/80 inline-block px-4 py-1 rounded-full">
+            🔍 觀察圖片差異，破解 AI 提示詞的秘密！
+        </p>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="max-w-6xl mx-auto px-4" id="main-content">
+        
+        <!-- 圖片比較區 -->
+        <section class="bg-white rounded-3xl p-4 md:p-8 card-shadow mb-8 border-t-8 border-secondary">
+            <div class="flex items-center gap-2 mb-4">
+                <i class="ph-fill ph-image text-2xl text-secondary"></i>
+                <h2 class="text-2xl font-bold text-gray-800">偵查檔案：圖片比對</h2>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- 題目圖 -->
+                <div class="flex-1">
+                    <div class="relative rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner group">
+                        <img id="img-original" src="" alt="題目圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
+                        <div class="absolute top-3 left-3 bg-blue-500 text-white px-4 py-1.5 rounded-full font-bold shadow-md flex items-center gap-1">
+                            <i class="ph-bold ph-image-square"></i> 題目圖
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 學生生成圖 -->
+                <div class="flex-1">
+                    <div class="relative rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner group">
+                        <img id="img-student" src="" alt="學生生成圖" class="w-full h-auto object-cover aspect-[4/3] transition duration-300 group-hover:scale-105">
+                        <div class="absolute top-3 left-3 bg-pink-500 text-white px-4 py-1.5 rounded-full font-bold shadow-md flex items-center gap-1">
+                            <i class="ph-bold ph-magic-wand"></i> 學生生成圖
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 任務一：最相似的地方 -->
+        <section class="bg-white rounded-3xl p-4 md:p-8 card-shadow mb-8 border-t-8 border-green-400">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="bg-green-100 text-green-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl">1</div>
+                <h2 class="text-2xl font-bold text-gray-800">任務一：找出最相似的地方</h2>
+            </div>
+            <p class="text-gray-500 mb-5 ml-10">請點選你覺得兩張圖中最相像的元素（可複選）</p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" id="task1-container">
+                <!-- JS 動態生成選項 -->
+            </div>
+        </section>
+
+        <!-- 任務二：差異最大的地方 -->
+        <section class="bg-white rounded-3xl p-4 md:p-8 card-shadow mb-8 border-t-8 border-orange-400">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl">2</div>
+                <h2 class="text-2xl font-bold text-gray-800">任務二：找出差異最大的地方</h2>
+            </div>
+            <p class="text-gray-500 mb-5 ml-10">請點選你覺得差異最明顯的地方（可複選）</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="task2-container">
+                <!-- JS 動態生成選項 -->
+            </div>
+        </section>
+
+        <!-- 任務三：推理原因 -->
+        <section class="bg-white rounded-3xl p-4 md:p-8 card-shadow mb-8 border-t-8 border-purple-400">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl">3</div>
+                <h2 class="text-2xl font-bold text-gray-800">任務三：推理差異原因</h2>
+            </div>
+            <p class="text-gray-500 mb-5 ml-10">化身偵探，推測為什麼 AI 會畫出不一樣的結果？（可複選）</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="task3-container">
+                <!-- JS 動態生成選項 -->
+            </div>
+        </section>
+
+        <!-- 任務四：改寫提示詞 -->
+        <section class="bg-white rounded-3xl p-4 md:p-8 card-shadow mb-10 border-t-8 border-blue-400">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-xl">4</div>
+                <h2 class="text-2xl font-bold text-gray-800">任務四：重新施展魔法</h2>
+            </div>
+            <p class="text-gray-500 mb-5 ml-10">為了讓圖片更接近原圖，你會怎麼修改提示詞？</p>
+            
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- 提示小卡 -->
+                <div class="bg-blue-50 rounded-2xl p-5 border-2 border-blue-100 lg:w-1/3">
+                    <h3 class="font-bold text-blue-800 flex items-center gap-2 mb-3">
+                        <i class="ph-fill ph-lightbulb text-xl text-yellow-500"></i> 提示小卡
+                    </h3>
+                    <p class="text-sm text-blue-700 mb-2">試著在提示詞中加入以下細節：</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">主角</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">服裝</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">動作</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">場景</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">光線</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">構圖</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">畫風</span>
+                        <span class="bg-white px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">細節</span>
+                    </div>
+                </div>
+                
+                <!-- 輸入框 -->
+                <div class="lg:w-2/3">
+                    <textarea id="prompt-input" rows="5" placeholder="請在此輸入你修改後的提示詞..." class="w-full w-full p-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition resize-none text-lg"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 送出按鈕 -->
+        <div class="text-center">
+            <button onclick="submitGame()" class="bg-primary hover:bg-red-500 text-white font-black text-2xl py-4 px-12 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200 flex items-center justify-center gap-2 mx-auto">
+                <i class="ph-bold ph-check-circle"></i>
+                送出偵查報告
+            </button>
+        </div>
+    </main>
+
+    <!-- 結果回饋區 (預設隱藏) -->
+    <main class="max-w-4xl mx-auto px-4 hidden" id="result-content">
+        <div class="bg-white rounded-3xl p-8 card-shadow text-center relative overflow-hidden">
+            <!-- 裝飾背景 -->
+            <div class="absolute top-[-50px] right-[-50px] text-yellow-300 opacity-20">
+                <i class="ph-fill ph-star" style="font-size: 200px;"></i>
+            </div>
+            
+            <h2 class="text-4xl font-black text-gray-800 mb-2 mt-4 relative z-10">偵查完成！</h2>
+            <p class="text-xl text-gray-500 mb-8 relative z-10">來看看你的分析報告吧</p>
+
+            <!-- 總分與稱號 -->
+            <div class="flex flex-col items-center justify-center mb-10 relative z-10">
+                <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-accent to-yellow-300 flex items-center justify-center shadow-lg border-4 border-white mb-4">
+                    <span id="final-score" class="text-5xl font-black text-orange-600">0</span>
+                    <span class="text-xl font-bold text-orange-600 mt-3">分</span>
+                </div>
+                <div id="rank-badge" class="bg-gray-800 text-white px-6 py-2 rounded-full text-2xl font-black shadow-md flex items-center gap-2">
+                    <!-- JS 填入稱號 -->
+                </div>
+            </div>
+
+            <!-- 報告明細 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left relative z-10 mb-8">
+                <div class="bg-green-50 p-6 rounded-2xl border-2 border-green-100">
+                    <h3 class="font-bold text-green-800 text-lg flex items-center gap-2 mb-3">
+                        <i class="ph-fill ph-check-circle"></i> 你發現的相似處
+                    </h3>
+                    <ul id="res-task1" class="list-disc list-inside text-green-700 space-y-1"></ul>
+                </div>
+                
+                <div class="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100">
+                    <h3 class="font-bold text-orange-800 text-lg flex items-center gap-2 mb-3">
+                        <i class="ph-fill ph-warning-circle"></i> 你發現的差異處
+                    </h3>
+                    <ul id="res-task2" class="list-disc list-inside text-orange-700 space-y-1"></ul>
+                </div>
+
+                <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-100 md:col-span-2">
+                    <h3 class="font-bold text-purple-800 text-lg flex items-center gap-2 mb-3">
+                        <i class="ph-fill ph-brain"></i> 你的推理原因
+                    </h3>
+                    <ul id="res-task3" class="list-disc list-inside text-purple-700 space-y-1"></ul>
+                </div>
+
+                <div class="bg-blue-50 p-6 rounded-2xl border-2 border-blue-100 md:col-span-2">
+                    <h3 class="font-bold text-blue-800 text-lg flex items-center gap-2 mb-3">
+                        <i class="ph-fill ph-magic-wand"></i> 你升級後的提示詞
+                    </h3>
+                    <p id="res-prompt" class="text-blue-700 bg-white p-3 rounded-xl shadow-sm italic"></p>
+                </div>
+            </div>
+
+            <!-- 鼓勵文字 -->
+            <div id="feedback-text" class="text-xl font-bold text-gray-700 bg-gray-100 p-6 rounded-2xl mb-8 relative z-10">
+                <!-- JS 填入鼓勵 -->
+            </div>
+
+            <button onclick="resetGame()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition duration-200 inline-flex items-center gap-2 relative z-10">
+                <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                重新挑戰
+            </button>
+        </div>
+    </main>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+        // ==========================================
+        // 1. 圖片網址變數集中管理 (請在這裡替換您的圖片網址)
+        // ==========================================
+        const IMAGE_ORIGINAL_URL = "https://placehold.co/800x600/FFD166/555555?text=Original+Image+(Teacher)"; 
+        const IMAGE_STUDENT_URL = "https://placehold.co/800x600/4ECDC4/ffffff?text=AI+Generated+(Student)";
+
+        // 設定圖片
+        document.getElementById('img-original').src = IMAGE_ORIGINAL_URL;
+        document.getElementById('img-student').src = IMAGE_STUDENT_URL;
+
+        // ==========================================
+        // 2. 任務選項資料設定
+        // ==========================================
+        const task1Options = ["小女孩", "紅色帽子", "白色洋裝", "白色小狗", "紅色牽繩", "禮物盒", "咖啡廳", "夕陽光線", "街道場景", "背景路人"];
+        const task2Options = ["女孩服裝不一樣", "女孩表情或動作不同", "狗的外型不同", "咖啡廳細節變少", "街道角度不同", "光線不像原圖", "建築物風格不同", "畫風變成卡通或插畫", "背景人物位置不同", "整體構圖比例不同"];
+        const task3Options = ["提示詞不夠具體", "沒有清楚描述畫風", "沒有清楚描述光線與夕陽", "忽略咖啡廳與街道細節", "沒有描述人物位置與角度", "沒有描述小狗特徵", "沒有說明背景人物", "AI 自行補充了畫面細節"];
+
+        // 儲存玩家選擇的狀態
+        let selections = {
+            task1: new Set(),
+            task2: new Set(),
+            task3: new Set()
+        };
+
+        // ==========================================
+        // 3. UI 渲染函式
+        // ==========================================
+        
+        // 渲染按鈕
+        function renderOptions(containerId, options, taskKey, colorTheme) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; // 清空
+
+            const themeClasses = {
+                green: { base: 'border-green-200 text-green-700 hover:bg-green-50', active: 'bg-green-100 border-green-500 shadow-md font-bold' },
+                orange: { base: 'border-orange-200 text-orange-700 hover:bg-orange-50', active: 'bg-orange-100 border-orange-500 shadow-md font-bold' },
+                purple: { base: 'border-purple-200 text-purple-700 hover:bg-purple-50', active: 'bg-purple-100 border-purple-500 shadow-md font-bold' }
+            };
+
+            options.forEach((opt, index) => {
+                const isSelected = selections[taskKey].has(opt);
+                const btn = document.createElement('button');
+                
+                // 基礎樣式
+                let classes = `btn-option w-full text-left md:text-center px-4 py-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-between md:justify-center gap-2 bg-white `;
+                
+                if (isSelected) {
+                    classes += themeClasses[colorTheme].active + ' selected-anim';
+                } else {
+                    classes += themeClasses[colorTheme].base;
+                }
+
+                btn.className = classes;
+                btn.onclick = () => toggleOption(taskKey, opt, containerId, options, colorTheme);
+
+                // 內容與 Check icon
+                const iconHtml = isSelected ? `<i class="ph-fill ph-check-circle text-xl"></i>` : `<i class="ph ph-circle text-xl opacity-50"></i>`;
+                
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    ${iconHtml}
+                `;
+                
+                container.appendChild(btn);
+            });
+        }
+
+        // 切換選項狀態
+        function toggleOption(taskKey, optionText, containerId, options, colorTheme) {
+            if (selections[taskKey].has(optionText)) {
+                selections[taskKey].delete(optionText);
+            } else {
+                selections[taskKey].add(optionText);
+            }
+            // 重新渲染該區塊
+            renderOptions(containerId, options, taskKey, colorTheme);
+        }
+
+        // 初始渲染
+        function initApp() {
+            renderOptions('task1-container', task1Options, 'task1', 'green');
+            renderOptions('task2-container', task2Options, 'task2', 'orange');
+            renderOptions('task3-container', task3Options, 'task3', 'purple');
+        }
+
+        // ==========================================
+        // 4. 計分與結果邏輯
+        // ==========================================
+        function submitGame() {
+            // 取得輸入的提示詞
+            const promptText = document.getElementById('prompt-input').value.trim();
+            
+            // 計算分數 (簡單的點擊計分邏輯，可依需求調整)
+            let score = 0;
+            // 每個選項算 3 分
+            score += selections.task1.size * 3; 
+            score += selections.task2.size * 3;
+            score += selections.task3.size * 3;
+            
+            // 提示詞有寫加分
+            if (promptText.length > 5) score += 10;
+            if (promptText.length > 20) score += 10;
+            if (promptText.length > 40) score += 5; // 寫很長再加分
+
+            // 最多 100 分
+            if (score > 100) score = 100;
+            // 如果甚麼都沒點但送出，給個基礎分 10
+            if (score === 0) score = 10;
+
+            // 判斷等級與評語
+            let rankInfo = getRankInfo(score);
+
+            // 填入結果資料
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('rank-badge').innerHTML = rankInfo.badgeHtml;
+            document.getElementById('feedback-text').innerText = rankInfo.feedback;
+
+            // 填入選擇清單
+            fillResultList('res-task1', selections.task1, '你還沒找出相似的地方唷！');
+            fillResultList('res-task2', selections.task2, '你還沒發現差異在哪裡唷！');
+            fillResultList('res-task3', selections.task3, '沒有選擇推理原因。');
+            
+            // 填入提示詞
+            const resPromptEl = document.getElementById('res-prompt');
+            if(promptText) {
+                resPromptEl.innerText = `「${promptText}」`;
+                resPromptEl.classList.remove('text-gray-400');
+            } else {
+                resPromptEl.innerText = "尚未輸入新的提示詞。下次可以試著寫寫看！";
+                resPromptEl.classList.add('text-gray-400');
+            }
+
+            // 切換畫面 (隱藏主內容，顯示結果)
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('result-content').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 判斷等級函式
+        function getRankInfo(score) {
+            if (score >= 90) {
+                return {
+                    badgeHtml: `<i class="ph-fill ph-crown text-yellow-300"></i> AI 摹寫神偵探`,
+                    feedback: "太厲害了！你擁有鷹眼般的觀察力，不僅抓出所有細節差異，還能精準推理出 AI 漏掉的提示詞！繼續保持這份敏銳度！"
+                };
+            } else if (score >= 70) {
+                return {
+                    badgeHtml: `<i class="ph-fill ph-magnifying-glass text-blue-300"></i> 細節觀察高手`,
+                    feedback: "做得好！你找出了大部分的差異與相似處，對 AI 的生成邏輯有很好的理解。下次在提示詞中多加一點點場景細節，圖就會更像喔！"
+                };
+            } else if (score >= 50) {
+                return {
+                    badgeHtml: `<i class="ph-fill ph-pencil text-green-300"></i> 提示詞修煉中`,
+                    feedback: "不錯的嘗試！你觀察到了一些重點。要讓 AI 完全聽懂你的話，需要把「光線、畫風、主角動作」等細節描述得更清楚喔，繼續加油！"
+                };
+            } else {
+                return {
+                    badgeHtml: `<i class="ph-fill ph-baby text-pink-300"></i> AI 找碴新手村`,
+                    feedback: "剛開始練習難免會漏看一些細節。下次試著從「人、事、時、地、物」五個方向，把圖片拆解開來仔細觀察看看！"
+                };
+            }
+        }
+
+        // 填充結果列表工具函式
+        function fillResultList(elementId, setObj, emptyMessage) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '';
+            if (setObj.size === 0) {
+                el.innerHTML = `<li class="text-gray-400 italic">${emptyMessage}</li>`;
+            } else {
+                setObj.forEach(item => {
+                    el.innerHTML += `<li>${item}</li>`;
+                });
+            }
+        }
+
+        // 重新開始遊戲
+        function resetGame() {
+            // 清空狀態
+            selections.task1.clear();
+            selections.task2.clear();
+            selections.task3.clear();
+            document.getElementById('prompt-input').value = '';
+
+            // 重新渲染按鈕
+            initApp();
+
+            // 切換畫面
+            document.getElementById('result-content').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 執行初始啟動
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
